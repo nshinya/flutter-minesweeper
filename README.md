@@ -1,4 +1,4 @@
 # minesweeper
 
-MineSweeper app made by Flutter.
+MineSweeper game built using Flutter.
 

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 enum TileState { opened, closed, flagged }
@@ -68,16 +69,17 @@ class MineField {
     _tiles = List.generate(width * height, (_) => MineTile());
   }
 
-  void startCount() {
+  void startGame(int row, int col) {
     if (_state == FieldState.waiting) {
-      placeBombs();
+      _placeBombs(row, col);
       _stopwatch.start();
       _state = FieldState.playing;
     }
   }
 
-  void placeBombs() {
-    List<int> bombIndex = _generateUniqueRandomInt(bombs, width * height);
+  void _placeBombs(int row, int col) {
+    List<int> bombIndex = _generateUniqueRandomInt(bombs, width * height,
+        excludeIndex: _getIndex(row, col));
     bombIndex.forEach((i) => _tiles[i].hasBomb = true);
     for (int i = 0; i < height; i++) {
       for (int j = 0; j < width; j++) {
@@ -102,11 +104,15 @@ class MineField {
     return count;
   }
 
-  List<int> _generateUniqueRandomInt(int length, int maxSize) {
+  List<int> _generateUniqueRandomInt(int length, int maxSize,
+      {int excludeIndex}) {
     List<int> list = [];
     Random rnd = Random();
     while (true) {
       int idx = rnd.nextInt(maxSize);
+      if (excludeIndex != null && idx == excludeIndex) {
+        continue;
+      }
       if (!list.contains(idx)) {
         list.add(idx);
       }
@@ -180,21 +186,21 @@ class MineSweeperSettings {
       : width = 9,
         height = 9,
         bombs = 10,
-        level = "初級";
+        level = "Beginner";
 
   const MineSweeperSettings.intermediate()
       : width = 16,
         height = 16,
         bombs = 40,
-        level = "中級";
+        level = "Intermediate";
 
   const MineSweeperSettings.expert()
       : width = 30,
         height = 16,
         bombs = 99,
-        level = "上級";
+        level = "Expert";
 
-  MineSweeperSettings(this.width, this.height, this.bombs) : level = "カスタム";
+  MineSweeperSettings(this.width, this.height, this.bombs) : level = "Custom";
 }
 
 class MineSweeperGame extends StatefulWidget {
@@ -207,9 +213,11 @@ class MineSweeperGame extends StatefulWidget {
 class _MineSweeperGameState extends State<MineSweeperGame> {
   MineSweeperSettings setting = const MineSweeperSettings.beginner();
   MineField field;
+  Timer timer;
 
   _MineSweeperGameState() {
     field = MineField(setting);
+    timer = Timer.periodic(Duration(seconds: 1), (t) => setState(() {}));
   }
 
   Widget _buildTile(int row, int col) {
@@ -218,7 +226,7 @@ class _MineSweeperGameState extends State<MineSweeperGame> {
     return GestureDetector(
         child: MineTileWidget(mineTile),
         onTap: () => setState(() {
-              field.startCount();
+              field.startGame(row, col);
               field.openTile(row, col);
             }),
         onLongPress: () => setState(() {
@@ -352,7 +360,7 @@ class MineTileWidget extends StatelessWidget {
     switch (mineTile.state) {
       case TileState.opened:
         if (mineTile.hasBomb) {
-          return Text("*");
+          return Image(image: AssetImage("assets/bomb.png"));
         }
         if (mineTile.numBombs == 0) {
           return Text("");
@@ -366,7 +374,7 @@ class MineTileWidget extends StatelessWidget {
         }
         break;
       case TileState.flagged:
-        return Icon(Icons.flag);
+        return Image(image: AssetImage("assets/flag.png"));
       case TileState.closed:
       default:
         return Text("");
