@@ -4,4 +4,4 @@ MineSweeper game built using Flutter.
 
 # Demo
 
-![Demo](https://github.com/nshinya/flutter-minesweeper/blob/master/images/minesweeper_demo.gif)
+<img src="https://github.com/nshinya/flutter-minesweeper/blob/master/images/minesweeper_demo.gif" alt="Demo" width="50%">
